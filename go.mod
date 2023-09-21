@@ -35,6 +35,7 @@ require (
 	github.com/google/nftables v0.1.1-0.20230115205135-9aa6fdf5a28c
 	github.com/google/uuid v1.3.0
 	github.com/goreleaser/nfpm/v2 v2.32.1-0.20230803123630-24a43c5ad7cf
+	github.com/hashicorp/vault/api v1.10.0
 	github.com/hdevalence/ed25519consensus v0.1.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/illarion/gonotify v1.0.1
@@ -102,7 +103,18 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.2.0
 )
 
-require github.com/gorilla/securecookie v1.1.1 // indirect
+require (
+	github.com/cenkalti/backoff/v3 v3.0.0 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
+	github.com/gorilla/securecookie v1.1.1 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
+	github.com/hashicorp/go-retryablehttp v0.6.6 // indirect
+	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
+	github.com/hashicorp/go-secure-stdlib/parseutil v0.1.6 // indirect
+	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
+	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
+	github.com/ryanuber/go-glob v1.0.0 // indirect
+)
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.2.1 // indirect
