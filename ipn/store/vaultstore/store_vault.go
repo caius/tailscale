@@ -18,13 +18,14 @@ type Store struct {
 	secretKey string
 }
 
+// keyPath should be in the format "mountPath:secretPath"
 func New(_ logger.Logf, keyPath string) (*Store, error) {
 	client, err := vault.NewClient(nil)
 	if err != nil {
 		return nil, err
 	}
 
-	bits := strings.SplitN(keyPath, "/", 2)
+	bits := strings.SplitN(keyPath, ":", 2)
 	if len(bits) != 2 {
 		return nil, fmt.Errorf("invalid secret key: %s", keyPath)
 	}
