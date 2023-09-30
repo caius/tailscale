@@ -20,7 +20,7 @@ type Store struct {
 
 // keyPath should be in the format "mountPath:secretPath"
 func New(_ logger.Logf, keyPath string) (*Store, error) {
-	client, err := vault.NewClient(nil)
+	client, err := vault.NewClient(nil) // nil means pick up defaults from environment
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,8 @@ func (s *Store) ReadState(id ipn.StateKey) ([]byte, error) {
 	key := fmt.Sprintf("%s/%s", s.secretKey, id)
 	data, err := kv.Get(context.Background(), key)
 	if err != nil {
-		return nil, err
+		// TODO: distinguish between "not found" and other errors
+		return nil, ipn.ErrStateNotExist
 	}
 
 	output := data.Data["data"].(string)

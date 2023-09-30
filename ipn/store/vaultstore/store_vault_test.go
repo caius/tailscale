@@ -8,6 +8,7 @@ import (
 	vaulthttp "github.com/hashicorp/vault/http"
 	"github.com/hashicorp/vault/sdk/logical"
 	hashivault "github.com/hashicorp/vault/vault"
+	"tailscale.com/ipn"
 )
 
 func createVaultTestCluster(t *testing.T) *hashivault.TestCluster {
@@ -69,5 +70,23 @@ func TestVaultStoreRetrieve(t *testing.T) {
 
 	if string(data) != "74889988-C2D2-4858-92EB-B51489F31E0E" {
 		t.Fatal("data does not match")
+	}
+}
+
+func TestVaultReadStateMissing(t *testing.T) {
+	cluster := createVaultTestCluster(t)
+	defer cluster.Cleanup()
+
+	vaultClient := cluster.Cores[0].Client
+
+	s := Store{
+		client:    vaultClient,
+		mountPath: "kv",
+		secretKey: "tailscale",
+	}
+
+	_, err := s.ReadState("machineId")
+	if err != ipn.ErrStateNotExist {
+		t.Fatal("expected ErrStateNotExist")
 	}
 }
