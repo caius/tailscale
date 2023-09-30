@@ -20,6 +20,7 @@ import (
 	"tailscale.com/paths"
 	"tailscale.com/types/logger"
 	"tailscale.com/util/mak"
+	"tailscale.com/ipn/store/vaultstore"
 )
 
 // Provider returns a StateStore for the provided path.
@@ -29,6 +30,17 @@ type Provider func(logf logger.Logf, arg string) (ipn.StateStore, error)
 var regOnce sync.Once
 
 var registerAvailableExternalStores func()
+
+func init() {
+	registerAvailableExternalStores = registerExternalStores
+}
+
+func registerExternalStores() {
+	Register("vault:", func(logf logger.Logf, path string) (ipn.StateStore, error) {
+		secretName := strings.TrimPrefix(path, "vault:")
+		return vaultstore.New(logf, secretName)
+	})
+}
 
 func registerDefaultStores() {
 	Register("mem:", mem.New)
