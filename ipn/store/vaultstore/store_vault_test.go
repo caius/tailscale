@@ -164,7 +164,7 @@ func TestVaultUpdateExistingData(t *testing.T) {
 	}
 }
 
-func TestVaultUpdateExistingDataKV2(t *testing.T) {
+func TestVaultRoundtripKV2(t *testing.T) {
 	tstest.PanicOnLog()
 
 	cluster := createVaultTestCluster(t, "2")
@@ -178,16 +178,19 @@ func TestVaultUpdateExistingDataKV2(t *testing.T) {
 		secretKey: "tailscale",
 	}
 
-	err := s.WriteState("one", []byte("1"))
+	// Read empty value
+	_, err := s.ReadState("one")
+	if err != ipn.ErrStateNotExist {
+		t.Fatal(err)
+	}
+
+	// Write first value
+	err = s.WriteState("one", []byte("1"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = s.WriteState("two", []byte("2"))
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	// Check first value wrote successfully
 	value, err := s.ReadState("one")
 	if err != nil {
 		t.Fatal(err)
@@ -196,11 +199,33 @@ func TestVaultUpdateExistingDataKV2(t *testing.T) {
 		t.Fatal("One did not match expected value")
 	}
 
+	// Check second value before writing it (catches bug where we were casting nil to string once Data returned)
+	_, err = s.ReadState("two")
+	if err != ipn.ErrStateNotExist {
+		t.Fatal(err)
+	}
+
+	// Write second value
+	err = s.WriteState("two", []byte("2"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Check second value wrote successfully
 	value2, err := s.ReadState("two")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if string(value2) != "2" {
+		t.Fatal("One did not match expected value")
+	}
+
+	// Check first value still exists
+	value, err = s.ReadState("one")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(value) != "1" {
 		t.Fatal("One did not match expected value")
 	}
 }

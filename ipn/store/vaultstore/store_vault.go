@@ -68,6 +68,10 @@ func (s *Store) ReadState(id ipn.StateKey) ([]byte, error) {
 		return nil, ipn.ErrStateNotExist
 	}
 
-	output := data.Data[string(id)].(string)
-	return []byte(output), nil
+	val, ok := data.Data[string(id)]
+	if ok {
+		return []byte(val.(string)), nil
+	} else {
+		return nil, ipn.ErrStateNotExist
+	}
 }
