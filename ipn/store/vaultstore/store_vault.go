@@ -38,10 +38,20 @@ func New(_ logger.Logf, keyPath string) (*Store, error) {
 }
 
 func (s *Store) WriteState(id ipn.StateKey, bs []byte) error {
-	kv := s.client.KVv2(s.mountPath)
+	// TODO: somehow figure out how we handle v1 vs v2
+	kv := s.client.KVv1(s.mountPath)
 
-	data := map[string]interface{}{"data": string(bs)}
-	_, err := kv.Put(context.Background(), fmt.Sprintf("%s/%s", s.secretKey, id), data)
+	// Read existing data out before updating our key
+	var data map[string]interface{}
+	value, err := kv.Get(context.Background(), s.secretKey)
+	if err != nil || value == nil {
+		data = map[string]interface{}{}
+	} else {
+		data = value.Data
+	}
+	data[string(id)] = string(bs)
+
+	err = kv.Put(context.Background(), s.secretKey, data)
 	if err != nil {
 		return err
 	}
@@ -50,15 +60,14 @@ func (s *Store) WriteState(id ipn.StateKey, bs []byte) error {
 }
 
 func (s *Store) ReadState(id ipn.StateKey) ([]byte, error) {
-	kv := s.client.KVv2(s.mountPath)
+	kv := s.client.KVv1(s.mountPath)
 
-	key := fmt.Sprintf("%s/%s", s.secretKey, id)
-	data, err := kv.Get(context.Background(), key)
+	data, err := kv.Get(context.Background(), s.secretKey)
 	if err != nil {
 		// TODO: distinguish between "not found" and other errors
 		return nil, ipn.ErrStateNotExist
 	}
 
-	output := data.Data["data"].(string)
+	output := data.Data[string(id)].(string)
 	return []byte(output), nil
 }
