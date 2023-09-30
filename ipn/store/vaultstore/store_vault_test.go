@@ -14,8 +14,12 @@ import (
 	"tailscale.com/tstest"
 )
 
-func createVaultTestCluster(t *testing.T) *hashivault.TestCluster {
+func createVaultTestCluster(t *testing.T, kvVersion string) *hashivault.TestCluster {
 	t.Helper()
+
+	if kvVersion != "1" && kvVersion != "2" {
+		t.Fatalf("invalid KV version: %s (must be \"1\" or \"2\")", kvVersion)
+	}
 
 	coreConfig := &hashivault.CoreConfig{
 		LogicalBackends: map[string]logical.Factory{
@@ -44,7 +48,7 @@ func createVaultTestCluster(t *testing.T) *hashivault.TestCluster {
 func TestVaultReadStateMissing(t *testing.T) {
 	tstest.PanicOnLog()
 
-	cluster := createVaultTestCluster(t)
+	cluster := createVaultTestCluster(t, "1")
 	defer cluster.Cleanup()
 
 	vaultClient := cluster.Cores[0].Client
@@ -64,7 +68,7 @@ func TestVaultReadStateMissing(t *testing.T) {
 func TestVaultReadStatePresent(t *testing.T) {
 	tstest.PanicOnLog()
 
-	cluster := createVaultTestCluster(t)
+	cluster := createVaultTestCluster(t, "1")
 	defer cluster.Cleanup()
 
 	vaultClient := cluster.Cores[0].Client
@@ -97,7 +101,7 @@ func TestVaultReadStatePresent(t *testing.T) {
 func TestVaultStoreRoundtrip(t *testing.T) {
 	tstest.PanicOnLog()
 
-	cluster := createVaultTestCluster(t)
+	cluster := createVaultTestCluster(t, "1")
 	defer cluster.Cleanup()
 
 	vaultClient := cluster.Cores[0].Client
@@ -122,7 +126,48 @@ func TestVaultStoreRoundtrip(t *testing.T) {
 func TestVaultUpdateExistingData(t *testing.T) {
 	tstest.PanicOnLog()
 
-	cluster := createVaultTestCluster(t)
+	cluster := createVaultTestCluster(t, "1")
+	defer cluster.Cleanup()
+
+	vaultClient := cluster.Cores[0].Client
+
+	s := Store{
+		client:    vaultClient,
+		mountPath: "kv",
+		secretKey: "tailscale",
+	}
+
+	err := s.WriteState("one", []byte("1"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = s.WriteState("two", []byte("2"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	value, err := s.ReadState("one")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(value) != "1" {
+		t.Fatal("One did not match expected value")
+	}
+
+	value2, err := s.ReadState("two")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(value2) != "2" {
+		t.Fatal("One did not match expected value")
+	}
+}
+
+func TestVaultUpdateExistingDataKV2(t *testing.T) {
+	tstest.PanicOnLog()
+
+	cluster := createVaultTestCluster(t, "2")
 	defer cluster.Cleanup()
 
 	vaultClient := cluster.Cores[0].Client
